@@ -30,6 +30,8 @@ class App(pg.window.Window):
                                             color = (30, 30, 30),
                                             batch = self._batch)
 
+        self._rect_coords = {'x' : 0, 'y' : 0}
+
         for counterY in range(11):
             lineH = []
             lineV = []
@@ -62,7 +64,20 @@ class App(pg.window.Window):
             self._pillarsH.append(lineH)
             self._pillarsV.append(lineV)
 
-        pg.clock.schedule_interval(self.update, 1/120)
+        self.sheduler_make_maze()
+
+    def sheduler_make_maze(self):
+        self._clock_counter = 0
+        pg.clock.schedule_interval(self.try_make_a_maze, .1)
+
+    def try_make_a_maze(self, dt):
+        self._pillarsH[randint(1, 9)][randint(0, 9)].color = (0, 0, 0, 0)
+        self._pillarsV[randint(0, 9)][randint(1, 9)].color = (0, 0, 0, 0)
+
+        self._clock_counter += 1
+
+        if self._clock_counter >= 100:
+            pg.clock.unschedule(self.try_make_a_maze)
 
     def load_sizes(self):
         if self.width < self.height: 
@@ -76,19 +91,15 @@ class App(pg.window.Window):
             self._paddingY = (self.height % 10) // 2
 
         self._b = self._plan - (self._plan // 10)
-        self._compensator = (self._plan // 10) // 2
+        self._compensator = (self._plan // 10) / 2
 
     def resize_repos(self):
         self.load_sizes()
 
-        self._rect.x = self._plan // 10 - self._compensator + self._paddingX
-        self._rect.y = self._plan // 10 - self._compensator + self._paddingY
+        self.move_rect()
 
         self._rect.width = self._b 
         self._rect.height = self._b
-
-        self._pillarsH[randint(1, 9)][randint(0, 9)].color = (0,0,0,0)
-        self._pillarsV[randint(0, 9)][randint(1, 9)].color = (0,0,0,0)
 
         counterY = 0
         for pillars in self._pillarsH: 
@@ -130,57 +141,57 @@ class App(pg.window.Window):
 
             counterY += 1
 
-    def border_collision(self, rect):
-        if rect.x <= self._paddingX + self._compensator:
-            rect.x = self._paddingX + self._compensator
-
-        if rect.x >= self.width - self._paddingX - self._compensator - rect.width:
-            rect.x = self.width - self._paddingX - self._compensator - rect.width
-
-        if rect.y <= self._paddingY + self._compensator:
-            rect.y = self._paddingY + self._compensator
-        
-        if rect.y >= self.height - self._paddingY - self._compensator - rect.height:
-            rect.y = self.height - self._paddingY - self._compensator - rect.height
-
-    def update(self, dt):
-        if self._keyRight:
-            self._rect.x += 1
-
-        if self._keyLeft:
-            self._rect.x -= 1
-
-        if self._keyUp:
-            self._rect.y += 1
-
-        if self._keyDown:
-            self._rect.y -= 1
-        
-        self.border_collision(self._rect)
-
     def on_draw(self):
         self.clear()
         self._batch.draw()
 
+    def move_rect(self):
+        self._rect.x = self._paddingX + self._compensator + self._rect_coords['x'] * (self._compensator * 2 + self._rect.width)
+        self._rect.y = self._paddingY + self._compensator + self._rect_coords['y'] * (self._compensator * 2 + self._rect.height)
+
     def on_key_press(self, symbol, modifiers):
-        if symbol in [pg.window.key.LEFT, pg.window.key.RIGHT, pg.window.key.DOWN, pg.window.key.UP, pg.window.key.NUM_0, pg.window.key.SPACE]:
-            if symbol == pg.window.key.LEFT: self._keyLeft = True
+        if symbol in [pg.window.key.LEFT, pg.window.key.RIGHT, pg.window.key.DOWN, pg.window.key.UP, pg.window.key.NUM_0, pg.window.key.ENTER]:
+            if symbol == pg.window.key.LEFT:
+                if self._rect_coords['x'] > 0:
+                    if self._pillarsV[self._rect_coords['y']][self._rect_coords['x']].color[3] == 0:
+                        self._rect_coords['x'] -= 1
+                        self.move_rect()
 
-            if symbol == pg.window.key.UP: self._keyUp = True
+            if symbol == pg.window.key.UP:
+                if self._rect_coords['y'] < 9:
+                    if self._pillarsH[self._rect_coords['y'] + 1][self._rect_coords['x']].color[3] == 0:
+                        self._rect_coords['y'] += 1
+                        self.move_rect()
 
-            if symbol == pg.window.key.DOWN: self._keyDown = True
+            if symbol == pg.window.key.DOWN:
+                if self._rect_coords['y'] > 0:
+                    if self._pillarsH[self._rect_coords['y']][self._rect_coords['x']].color[3] == 0:
+                        self._rect_coords['y'] -= 1
+                        self.move_rect()
 
-            if symbol == pg.window.key.RIGHT: self._keyRight = True
+            if symbol == pg.window.key.RIGHT:
+                if self._rect_coords['x'] < 9:
+                    if self._pillarsV[self._rect_coords['y']][self._rect_coords['x'] + 1].color[3] == 0:
+                        self._rect_coords['x'] += 1
+                        self.move_rect()
 
-    def on_key_release(self, symbol, modifiers):
-        if symbol in [pg.window.key.LEFT, pg.window.key.RIGHT, pg.window.key.DOWN, pg.window.key.UP, pg.window.key.NUM_0, pg.window.key.SPACE]:
-            if symbol == pg.window.key.LEFT: self._keyLeft = False
+            if symbol == pg.window.key.NUM_0:
+                pg.clock.unschedule(self.try_make_a_maze)
+                
+                for counter0_9 in range(10):
+                    for counter1_9 in range(1, 10, 1):
+                        self._pillarsH[counter1_9][counter0_9].color = (0, 0, 0, 0)
+                        self._pillarsV[counter0_9][counter1_9].color = (0, 0, 0, 0)
+            
+            if symbol == pg.window.key.ENTER:
+                pg.clock.unschedule(self.try_make_a_maze)
+                
+                for counter0_9 in range(10):
+                    for counter1_9 in range(1, 10, 1):
+                        self._pillarsH[counter1_9][counter0_9].color = (0, 0, 0, 255)
+                        self._pillarsV[counter0_9][counter1_9].color = (0, 0, 0, 255)
 
-            if symbol == pg.window.key.UP: self._keyUp = False
-
-            if symbol == pg.window.key.DOWN: self._keyDown = False
-
-            if symbol == pg.window.key.RIGHT: self._keyRight = False
+                self.sheduler_make_maze()
 
     def on_resize(self, width, height):
         self.resize_repos()
