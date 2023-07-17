@@ -15,24 +15,49 @@ class App(pg.window.Window):
         self._keyDown = False
         self._keyRight = False
 
-        self._rect = pg.shapes.Rectangle(30, 30, 100, 100,
+        self.load_sizes()
+
+        self._rect = pg.shapes.Rectangle(self._plan // 10 - self._compensator, self._plan // 10 - self._compensator, self._b, self._b,
                                             color = (30, 30, 30),
                                             batch = self._batch)
 
         pg.clock.schedule_interval(self.update, 1/120)
 
+    def load_sizes(self):
+        if self.width < self.height: 
+            self._plan = self.width // 10
+            self._paddingX = (self.width % 10) // 2
+            self._paddingY = (self.height - self.width) // 2
+
+        else: 
+            self._plan = self.height // 10
+            self._paddingX = (self.width - self.height) // 2
+            self._paddingY = (self.height % 10) // 2
+
+        self._b = self._plan - (self._plan // 10)
+        self._compensator = (self._plan // 10) // 2
+
+    def resize_repos(self):
+        self.load_sizes()
+
+        self._rect.x = self._plan // 10 - self._compensator + self._paddingX
+        self._rect.y = self._plan // 10 - self._compensator + self._paddingY
+
+        self._rect.width = self._b 
+        self._rect.height = self._b
+
     def border_collision(self, rect):
-        if rect.x <= 0:
-            rect.x = 0
+        if rect.x <= self._paddingX + self._compensator:
+            rect.x = self._paddingX + self._compensator
 
-        if rect.x >= self.width - rect.width:
-            rect.x = self.width - rect.width
+        if rect.x >= self.width - self._paddingX - self._compensator - rect.width:
+            rect.x = self.width - self._paddingX - self._compensator - rect.width
 
-        if rect.y <= 0:
-            rect.y = 0
+        if rect.y <= self._paddingY + self._compensator:
+            rect.y = self._paddingY + self._compensator
         
-        if rect.y >= self.height - rect.height:
-            rect.y = self.height - rect.height
+        if rect.y >= self.height - self._paddingY - self._compensator - rect.height:
+            rect.y = self.height - self._paddingY - self._compensator - rect.height
 
     def update(self, dt):
         if self._keyRight:
@@ -72,6 +97,11 @@ class App(pg.window.Window):
             if symbol == pg.window.key.DOWN: self._keyDown = False
 
             if symbol == pg.window.key.RIGHT: self._keyRight = False
+
+    def on_resize(self, width, height):
+        self.resize_repos()
+
+        return super().on_resize(width, height)
 
 if __name__ == '__main__':
     window = App(resizable = True)
