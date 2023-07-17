@@ -15,11 +15,52 @@ class App(pg.window.Window):
         self._keyDown = False
         self._keyRight = False
 
+        self._COLOR_WHITE = (255, 255, 255)
+        self._COLOR_BLACK = (0, 0, 0)
+
+        self._colorH = self._COLOR_BLACK
+        self._colorV = self._COLOR_BLACK
+
+        self._pillarsH = []
+        self._pillarsV = []
+
         self.load_sizes()
 
         self._rect = pg.shapes.Rectangle(self._plan // 10 - self._compensator, self._plan // 10 - self._compensator, self._b, self._b,
                                             color = (30, 30, 30),
                                             batch = self._batch)
+
+        for counterY in range(11):
+            lineH = []
+            lineV = []
+
+            for counterX in range(10):
+                if counterY == 0 or counterY == 10: self._colorH = self._COLOR_WHITE
+                else: self._colorH = self._COLOR_BLACK
+
+                if counterX == 0 and counterY < 10 or counterY == 10: self._colorV = self._COLOR_WHITE
+                else: self._colorV = self._COLOR_BLACK
+
+                lineH.append(pg.shapes.Rectangle((self._plan * counterX) - self._compensator + self._paddingX, (self._plan * counterY) - self._compensator + self._paddingY, self._plan, self._plan // 10,
+                                                    color = self._colorH,
+                                                    batch = self._batch))
+
+                if counterY == 10:
+                    pivotY = counterY
+                    pivotX = counterX
+                    counterY = counterX
+                    counterX = 10
+
+                lineV.append(pg.shapes.Rectangle((self._plan * counterX) - self._compensator + self._paddingX, (self._plan * counterY) - self._compensator + self._paddingY, self._plan // 10, self._plan,
+                                                    color = self._colorV,
+                                                    batch = self._batch))
+
+                if counterX == 10:
+                    counterX = pivotX
+                    counterY = pivotY
+
+            self._pillarsH.append(lineH)
+            self._pillarsV.append(lineV)
 
         pg.clock.schedule_interval(self.update, 1/120)
 
@@ -45,6 +86,49 @@ class App(pg.window.Window):
 
         self._rect.width = self._b 
         self._rect.height = self._b
+
+        self._pillarsH[randint(1, 9)][randint(0, 9)].color = (0,0,0,0)
+        self._pillarsV[randint(0, 9)][randint(1, 9)].color = (0,0,0,0)
+
+        counterY = 0
+        for pillars in self._pillarsH: 
+            counterX = 0
+
+            for pillar in pillars:
+                pillar.x = (self._plan * counterX) - self._compensator + self._paddingX
+                pillar.y = (self._plan * counterY) - self._compensator + self._paddingY
+
+                pillar.width = self._plan 
+                pillar.height = self._plan // 10
+                
+                counterX += 1
+
+            counterY += 1
+
+        counterY = 0
+        for pillars in self._pillarsV: 
+            counterX = 0
+
+            for pillar in pillars:
+                if counterY == 10:
+                    pivotY = counterY
+                    pivotX = counterX
+                    counterY = counterX
+                    counterX = 10
+                    
+                pillar.x = (self._plan * counterX) - self._compensator + self._paddingX
+                pillar.y = (self._plan * counterY) - self._compensator + self._paddingY
+
+                pillar.width = self._plan // 10
+                pillar.height = self._plan
+                
+                if counterX == 10:
+                    counterX = pivotX
+                    counterY = pivotY
+                
+                counterX += 1
+
+            counterY += 1
 
     def border_collision(self, rect):
         if rect.x <= self._paddingX + self._compensator:
