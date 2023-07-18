@@ -150,7 +150,7 @@ class App(pg.window.Window):
         self._rect.y = self._paddingY + self._compensator + self._rect_coords['y'] * (self._compensator * 2 + self._rect.height)
 
     def on_key_press(self, symbol, modifiers):
-        if symbol in [pg.window.key.LEFT, pg.window.key.RIGHT, pg.window.key.DOWN, pg.window.key.UP, pg.window.key.NUM_0, pg.window.key.ENTER]:
+        if symbol in [pg.window.key.LEFT, pg.window.key.RIGHT, pg.window.key.DOWN, pg.window.key.UP, pg.window.key.NUM_0, pg.window.key._0, pg.window.key.ENTER]:
             if symbol == pg.window.key.LEFT:
                 if self._rect_coords['x'] > 0:
                     if self._pillarsV[self._rect_coords['y']][self._rect_coords['x']].color[3] == 0:
@@ -175,7 +175,7 @@ class App(pg.window.Window):
                         self._rect_coords['x'] += 1
                         self.move_rect()
 
-            if symbol == pg.window.key.NUM_0:
+            if symbol in [pg.window.key.NUM_0, pg.window.key._0]
                 pg.clock.unschedule(self.try_make_a_maze)
                 
                 for counter0_9 in range(10):
